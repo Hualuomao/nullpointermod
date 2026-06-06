@@ -1,0 +1,34 @@
+modLoader="javafml"
+loaderVersion="[43,)"
+license="MIT"
+
+[[mods]]
+modId="nullpointermod"
+version="1.0.0正式版"
+displayName="空指针模组 Null Pointer Exception Mod"
+logoFile="META-INF/logo.png"
+credits="luomaoa"
+authors="luomaoa"
+description='''
+这个mod添加了一个特殊的武器，可以射出java.nullPointerException抛射物。 
+对实体的命中会立即杀死它们。 
+击中块或超时将使用 NullPointerException 使游戏崩溃。
+This mod adds a special weapon that shoots java.NullPointerException projectiles.
+Hits on entities will instantly kill them.
+Hits on blocks or timeout will crash the game with a NullPointerException.
+由luomaoa创建 如果你有什么好的意见 请在github上找我。https://github.com/Hualuomao
+'''
+
+[[dependencies.nullpointermod]]
+    modId="forge"
+    mandatory=true
+    versionRange="[43,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.nullpointermod]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1]"
+    ordering="NONE"
+    side="BOTH"
