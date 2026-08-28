@@ -4,7 +4,6 @@ import com.example.nullpointermod.entity.NullPointerProjectile;
 import com.example.nullpointermod.item.JavaItem;
 import com.example.nullpointermod.item.NullPointerItem;
 import com.example.nullpointermod.network.ClientboundCrashPacket;
-import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -39,10 +38,9 @@ public class NullPointerMod {
     );
 
     private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MOD_ID);
-    public static final RegistryObject<Item> NULL_POINTER_ITEM = ITEMS.register("java_null_pointer_exception", 
-            () -> new NullPointerItem(new Item.Properties()));
-    public static final RegistryObject<Item> JAVA_ITEM = ITEMS.register("java_item", 
-            () -> new JavaItem(new Item.Properties().stacksTo(1)));
+    // ✅ 使用无参构造器引用
+    public static final RegistryObject<Item> NULL_POINTER_ITEM = ITEMS.register("java_null_pointer_exception", NullPointerItem::new);
+    public static final RegistryObject<Item> JAVA_ITEM = ITEMS.register("java_item", JavaItem::new);
 
     private static final DeferredRegister<EntityType<?>> ENTITIES = DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, MOD_ID);
     public static final RegistryObject<EntityType<NullPointerProjectile>> NULL_POINTER_PROJECTILE =
@@ -68,7 +66,6 @@ public class NullPointerMod {
         MinecraftForge.EVENT_BUS.register(this);
     }
 
-    // ---------- 定时扫描容器，销毁非法存放的空指针 ----------
     private static int tickCounter = 0;
 
     @SubscribeEvent
@@ -82,8 +79,21 @@ public class NullPointerMod {
     }
 
     private void scanAndCleanContainers() {
-        // 在服务器事件中获取服务器实例
-        // MinecraftServer.getServer() 在 1.20.1 不存在
-        // 改用 event.getServer()
+        MinecraftServer server = MinecraftServer.getServer();
+        if (server == null) return;
+
+        for (ServerLevel level : server.getAllLevels()) {
+            for (BlockEntity be : level.getBlockEntities().values()) {
+                if (be instanceof EnderChestBlockEntity) continue;
+                if (be instanceof Container container) {
+                    for (int slot = 0; slot < container.getContainerSize(); slot++) {
+                        ItemStack stack = container.getItem(slot);
+                        if (!stack.isEmpty() && stack.getItem() == NULL_POINTER_ITEM.get()) {
+                            container.setItem(slot, ItemStack.EMPTY);
+                        }
+                    }
+                }
+            }
+        }
     }
 }
