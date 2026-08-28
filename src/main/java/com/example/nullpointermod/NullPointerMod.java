@@ -4,6 +4,7 @@ import com.example.nullpointermod.entity.NullPointerProjectile;
 import com.example.nullpointermod.item.JavaItem;
 import com.example.nullpointermod.item.NullPointerItem;
 import com.example.nullpointermod.network.ClientboundCrashPacket;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -14,6 +15,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.EnderChestBlockEntity;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -25,6 +27,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
+import net.minecraftforge.server.ServerLifecycleHooks;
 
 @Mod(NullPointerMod.MOD_ID)
 public class NullPointerMod {
@@ -38,7 +41,6 @@ public class NullPointerMod {
     );
 
     private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MOD_ID);
-    // ✅ 使用无参构造器引用
     public static final RegistryObject<Item> NULL_POINTER_ITEM = ITEMS.register("java_null_pointer_exception", NullPointerItem::new);
     public static final RegistryObject<Item> JAVA_ITEM = ITEMS.register("java_item", JavaItem::new);
 
@@ -79,17 +81,24 @@ public class NullPointerMod {
     }
 
     private void scanAndCleanContainers() {
-        MinecraftServer server = MinecraftServer.getServer();
+        // 获取当前服务器实例（Forge 方式）
+        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         if (server == null) return;
 
         for (ServerLevel level : server.getAllLevels()) {
-            for (BlockEntity be : level.getBlockEntities().values()) {
-                if (be instanceof EnderChestBlockEntity) continue;
-                if (be instanceof Container container) {
-                    for (int slot = 0; slot < container.getContainerSize(); slot++) {
-                        ItemStack stack = container.getItem(slot);
-                        if (!stack.isEmpty() && stack.getItem() == NULL_POINTER_ITEM.get()) {
-                            container.setItem(slot, ItemStack.EMPTY);
+            // 遍历所有已加载的区块
+            for (LevelChunk chunk : level.getChunkSource().getLoadedChunks()) {
+                // 获取该区块中的所有方块实体（Map<BlockPos, BlockEntity>）
+                for (BlockEntity be : chunk.getBlockEntities().values()) {
+                    // 跳过末影箱（合法存储）
+                    if (be instanceof EnderChestBlockEntity) continue;
+
+                    if (be instanceof Container container) {
+                        for (int slot = 0; slot < container.getContainerSize(); slot++) {
+                            ItemStack stack = container.getItem(slot);
+                            if (!stack.isEmpty() && stack.getItem() == NULL_POINTER_ITEM.get()) {
+                                container.setItem(slot, ItemStack.EMPTY);
+                            }
                         }
                     }
                 }
