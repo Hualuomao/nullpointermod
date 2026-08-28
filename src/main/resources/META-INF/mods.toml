@@ -1,4 +1,4 @@
-modLoader="javafxmod"
+modLoader="javafml"
 loaderVersion="[43,)"
 license="MIT"
 
@@ -10,10 +10,26 @@ displayURL="https://github.com/Hualuomao/nullpointermod"
 logoFile="assets/nullpointermod/logo.png"
 credits="Created by Hualuomao"
 authors="Hualuomao"
-description="""A Minecraft mod that adds the Java Item and Null Pointer Projectile.
-When you right-click on air with the Java Item, it generates a Null Pointer.
-When you right-click with the Null Pointer, it shoots a projectile that crashes the client when it hits something.
-"""
+description="""A Minecraft mod that turns java.lang.NullPointerException into a weapon!
+
+【玩法】
+1. Craft the "Java" item with rare materials (Nether Star + Netherite + Ender Eyes).
+2. Right-click air while holding it to generate a "Null Pointer" item.
+3. Right-click to launch it as a projectile.
+
+【崩溃触发】
+- Hitting a block → shooter's client crashes!
+- Hitting yourself → self-destruct crash!
+- Flying for 10 seconds → timeout crash!
+
+【防滥用机制】
+- Max 16 per player
+- Global limit: 128
+- 30-second despawn for dropped items
+- 5-second cooldown
+
+Server-friendly: the server never crashes, only the shooter's client does!
+Ideal for trolling friends and creating funny moments."""
 
 [[dependencies.nullpointermod]]
     modId="forge"
