@@ -10,7 +10,7 @@ public class NullPointerProjectileRenderer extends ThrownItemRenderer<NullPointe
     private static final ResourceLocation TEXTURE = new ResourceLocation(NullPointerMod.MOD_ID, "textures/entity/null_pointer.png");
 
     public NullPointerProjectileRenderer(EntityRendererProvider.Context context) {
-        super(context);
+        super(context, NullPointerMod.NULL_POINTER_ITEM.get());
     }
 
     @Override
