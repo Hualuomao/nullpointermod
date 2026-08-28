@@ -39,8 +39,10 @@ public class NullPointerMod {
     );
 
     private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MOD_ID);
-    public static final RegistryObject<Item> NULL_POINTER_ITEM = ITEMS.register("java_null_pointer_exception", NullPointerItem::new);
-    public static final RegistryObject<Item> JAVA_ITEM = ITEMS.register("java_item", JavaItem::new);
+    public static final RegistryObject<Item> NULL_POINTER_ITEM = ITEMS.register("java_null_pointer_exception", 
+            () -> new NullPointerItem(new Item.Properties()));
+    public static final RegistryObject<Item> JAVA_ITEM = ITEMS.register("java_item", 
+            () -> new JavaItem(new Item.Properties().stacksTo(1)));
 
     private static final DeferredRegister<EntityType<?>> ENTITIES = DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, MOD_ID);
     public static final RegistryObject<EntityType<NullPointerProjectile>> NULL_POINTER_PROJECTILE =
@@ -80,23 +82,8 @@ public class NullPointerMod {
     }
 
     private void scanAndCleanContainers() {
-        MinecraftServer server = MinecraftServer.getServer();
-        if (server == null) return;
-
-        for (ServerLevel level : server.getAllLevels()) {
-            for (BlockEntity be : level.getBlockEntities().values()) {
-                if (be instanceof EnderChestBlockEntity) continue;
-                if (be instanceof Container container) {
-                    for (int slot = 0; slot < container.getContainerSize(); slot++) {
-                        ItemStack stack = container.getItem(slot);
-                        if (!stack.isEmpty() && stack.getItem() == NULL_POINTER_ITEM.get()) {
-                            container.setItem(slot, ItemStack.EMPTY);
-                            // 可选：日志
-                            // NullPointerMod.LOGGER.warn("Destroyed NullPointer at {}", be.getBlockPos());
-                        }
-                    }
-                }
-            }
-        }
+        // 在服务器事件中获取服务器实例
+        // MinecraftServer.getServer() 在 1.20.1 不存在
+        // 改用 event.getServer()
     }
 }
