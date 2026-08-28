@@ -8,6 +8,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 
 import java.util.List;
 
@@ -16,7 +17,7 @@ public class JavaItem extends Item {
     private static final int MAX_NULL_POINTERS = 64;
 
     public JavaItem() {
-        super(new Item.Properties().stacksTo(1)); // 明确使用 Item.Properties
+        super(new Item.Properties().stacksTo(1));
     }
 
     @Override
@@ -54,14 +55,18 @@ public class JavaItem extends Item {
     private int countNullPointers(Level level) {
         int total = 0;
 
+        // 玩家背包
         for (Player player : level.players()) {
             for (ItemStack stack : player.getInventory().items) {
                 if (stack.getItem() == NullPointerMod.NULL_POINTER_ITEM.get()) {
                     total += stack.getCount();
                 }
             }
+            // 末影箱（用 getItem 方法）
             if (player.getEnderChestInventory() != null) {
-                for (ItemStack stack : player.getEnderChestInventory().items) {
+                var enderChest = player.getEnderChestInventory();
+                for (int i = 0; i < enderChest.getContainerSize(); i++) {
+                    ItemStack stack = enderChest.getItem(i);
                     if (stack.getItem() == NullPointerMod.NULL_POINTER_ITEM.get()) {
                         total += stack.getCount();
                     }
@@ -69,9 +74,18 @@ public class JavaItem extends Item {
             }
         }
 
-        List<ItemEntity> items = level.getEntitiesOfClass(ItemEntity.class,
+        // 掉落物（用 AABB 覆盖整个维度）
+        AABB worldAABB = new AABB(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY,
+                Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+        List<ItemEntity> items = level.getEntitiesOfClass(ItemEntity.class, worldAABB,
                 e -> e.getItem().getItem() == NullPointerMod.NULL_POINTER_ITEM.get());
         for (ItemEntity itemEntity : items) {
+            total += itemEntity.getItem().getCount();
+        }
+
+        return total;
+    }
+}        for (ItemEntity itemEntity : items) {
             total += itemEntity.getItem().getCount();
         }
 
