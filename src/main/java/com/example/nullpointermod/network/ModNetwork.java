@@ -19,7 +19,7 @@ public class ModNetwork {
         int id = 0;
         
         INSTANCE.messageBuilder(ClientboundCrashPacket.class, id++, NetworkDirection.PLAY_TO_CLIENT)
-            .decoder(ClientboundCrashPacket::fromBytes)
+            .decoder(ClientboundCrashPacket::new)
             .encoder(ClientboundCrashPacket::toBytes)
             .consumerMainThread(ClientboundCrashPacket::handle)
             .add();
