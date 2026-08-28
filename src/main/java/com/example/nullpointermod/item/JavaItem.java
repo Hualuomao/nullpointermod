@@ -15,8 +15,8 @@ public class JavaItem extends Item {
     private static final int COOLDOWN_TICKS = 100; // 5秒
     private static final int MAX_NULL_POINTERS = 64;
 
-    public JavaItem() {
-        super(new Properties().stacksTo(1));
+    public JavaItem(Properties properties) {
+        super(properties);
     }
 
     @Override
@@ -61,8 +61,10 @@ public class JavaItem extends Item {
                     total += stack.getCount();
                 }
             }
+            // 使用正确的方式访问末影箱
             if (player.getEnderChestInventory() != null) {
-                for (ItemStack stack : player.getEnderChestInventory().items) {
+                for (int i = 0; i < player.getEnderChestInventory().getContainerSize(); i++) {
+                    ItemStack stack = player.getEnderChestInventory().getItem(i);
                     if (stack.getItem() == NullPointerMod.NULL_POINTER_ITEM.get()) {
                         total += stack.getCount();
                     }
@@ -71,6 +73,7 @@ public class JavaItem extends Item {
         }
 
         List<ItemEntity> items = level.getEntitiesOfClass(ItemEntity.class,
+                level.getWorldBorder().getBoundingBoxMargin(0),
                 e -> e.getItem().getItem() == NullPointerMod.NULL_POINTER_ITEM.get());
         for (ItemEntity itemEntity : items) {
             total += itemEntity.getItem().getCount();
