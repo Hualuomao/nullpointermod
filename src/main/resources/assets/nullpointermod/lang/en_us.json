@@ -1,5 +1,4 @@
 {
-  "item.nullpointermod.java_item": "Java Item",
-  "item.nullpointermod.java_null_pointer_exception": "Null Pointer",
-  "entity.nullpointermod.null_pointer_projectile": "Null Pointer Projectile"
+  "item.nullpointermod.java_item": "Java",
+  "item.nullpointermod.java_null_pointer_exception": "Java NullPointerException"
 }

@@ -1,44 +1,29 @@
 package com.example.nullpointermod.network;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
+
 import java.util.function.Supplier;
 
-/**
- * Clientbound Crash Packet
- * Server sends this to client to trigger a NullPointerException crash
- */
 public class ClientboundCrashPacket {
+    private final String message;
 
-    private String crashReason;
-
-    public ClientboundCrashPacket(String reason) {
-        this.crashReason = reason;
+    public ClientboundCrashPacket(String message) {
+        this.message = message;
     }
 
-    public ClientboundCrashPacket() {
-        this("Unknown reason");
+    public void encode(FriendlyByteBuf buf) {
+        buf.writeUtf(message, 256);
     }
 
-    public void toBytes(net.minecraft.network.FriendlyByteBuf buf) {
-        buf.writeUtf(crashReason);
+    public static ClientboundCrashPacket decode(FriendlyByteBuf buf) {
+        return new ClientboundCrashPacket(buf.readUtf(256));
     }
 
-    public static ClientboundCrashPacket fromBytes(net.minecraft.network.FriendlyByteBuf buf) {
-        return new ClientboundCrashPacket(buf.readUtf());
-    }
-
-    public static boolean handle(ClientboundCrashPacket packet, Supplier<NetworkEvent.Context> supplier) {
-        NetworkEvent.Context context = supplier.get();
-
-        context.enqueueWork(() -> {
-            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-                // Trigger NullPointerException on client side
-                throw new NullPointerException("Crash triggered by packet: " + packet.crashReason);
-            });
+    public static void handle(ClientboundCrashPacket packet, Supplier<NetworkEvent.Context> ctx) {
+        ctx.get().enqueueWork(() -> {
+            throw new NullPointerException("A wild NullPointerException appears! " + packet.message);
         });
-
-        return true;
+        ctx.get().setPacketHandled(true);
     }
 }

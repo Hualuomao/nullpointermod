@@ -1,23 +1,16 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "ABA",
-    "BCB",
-    "ABA"
+    " E ",
+    "INI",
+    " E "
   ],
   "key": {
-    "A": {
-      "item": "minecraft:nether_star"
-    },
-    "B": {
-      "item": "minecraft:netherite_ingot"
-    },
-    "C": {
-      "item": "minecraft:ender_eye"
-    }
+    "E": { "item": "minecraft:ender_eye" },
+    "N": { "item": "minecraft:nether_star" },
+    "I": { "item": "minecraft:netherite_ingot" }
   },
   "result": {
-    "item": "nullpointermod:java_item",
-    "count": 1
+    "item": "nullpointermod:java_item"
   }
 }

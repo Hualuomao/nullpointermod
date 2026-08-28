@@ -1,5 +1,4 @@
 {
-  "item.nullpointermod.java_item": "Java物品",
-  "item.nullpointermod.java_null_pointer_exception": "空指针",
-  "entity.nullpointermod.null_pointer_projectile": "空指针抛射物"
+  "item.nullpointermod.java_item": "Java",
+  "item.nullpointermod.java_null_pointer_exception": "Java 空指针异常"
 }
