@@ -15,8 +15,8 @@ public class JavaItem extends Item {
     private static final int COOLDOWN_TICKS = 100; // 5秒
     private static final int MAX_NULL_POINTERS = 64;
 
-    public JavaItem(Properties properties) {
-        super(properties);
+    public JavaItem() {
+        super(new Properties().stacksTo(1));
     }
 
     @Override
@@ -53,30 +53,29 @@ public class JavaItem extends Item {
 
     // 统计合法位置：玩家背包、末影箱、掉落物
     private int countNullPointers(Level level) {
-    int total = 0;
+        int total = 0;
 
-    // 1. 统计所有玩家的背包 + 末影箱
-    for (Player player : level.players()) {
-        for (ItemStack stack : player.getInventory().items) {
-            if (stack.getItem() == NullPointerMod.NULL_POINTER_ITEM.get()) {
-                total += stack.getCount();
-            }
-        }
-        if (player.getEnderChestInventory() != null) {
-            for (ItemStack stack : player.getEnderChestInventory().items) {
+        for (Player player : level.players()) {
+            for (ItemStack stack : player.getInventory().items) {
                 if (stack.getItem() == NullPointerMod.NULL_POINTER_ITEM.get()) {
                     total += stack.getCount();
                 }
             }
+            if (player.getEnderChestInventory() != null) {
+                for (ItemStack stack : player.getEnderChestInventory().items) {
+                    if (stack.getItem() == NullPointerMod.NULL_POINTER_ITEM.get()) {
+                        total += stack.getCount();
+                    }
+                }
+            }
         }
-    }
 
-    // 2. 统计所有掉落物实体（不依赖世界边界）
-    List<ItemEntity> items = level.getEntitiesOfClass(ItemEntity.class,
-            e -> e.getItem().getItem() == NullPointerMod.NULL_POINTER_ITEM.get());
-    for (ItemEntity itemEntity : items) {
-        total += itemEntity.getItem().getCount();
-    }
+        List<ItemEntity> items = level.getEntitiesOfClass(ItemEntity.class,
+                e -> e.getItem().getItem() == NullPointerMod.NULL_POINTER_ITEM.get());
+        for (ItemEntity itemEntity : items) {
+            total += itemEntity.getItem().getCount();
+        }
 
-    return total;
+        return total;
+    }
 }
