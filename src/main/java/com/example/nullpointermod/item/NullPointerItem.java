@@ -10,8 +10,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
 public class NullPointerItem extends Item {
-    public NullPointerItem(Properties properties) {
-        super(properties);
+    public NullPointerItem() {
+        super(new Item.Properties().stacksTo(1));
     }
 
     @Override
@@ -23,7 +23,6 @@ public class NullPointerItem extends Item {
             projectile.setPos(player.getX(), player.getEyeY() - 0.1, player.getZ());
             projectile.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, 1.5F, 1.0F);
             level.addFreshEntity(projectile);
-
             heldStack.shrink(1);
         }
 
