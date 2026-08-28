@@ -10,8 +10,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
 public class NullPointerItem extends Item {
-    public NullPointerItem() {
-        super(new Properties().stacksTo(1));
+    public NullPointerItem(Properties properties) {
+        super(properties);
     }
 
     @Override
