@@ -1,5 +1,5 @@
 modLoader="javafxmod"
-loaderVersion="[40,)"
+loaderVersion="[43,)"
 license="MIT"
 
 [[mods]]
@@ -8,24 +8,23 @@ version="${file.jarVersion}"
 displayName="Null Pointer Mod"
 displayURL="https://github.com/Hualuomao/nullpointermod"
 logoFile="assets/nullpointermod/logo.png"
-credits="Created for testing purposes"
+credits="Created by Hualuomao"
 authors="Hualuomao"
-description="""
-A Minecraft mod that adds Java and Null Pointer Exception items.
-- Java Item: Right-click to generate Null Pointer Exception items (5s cooldown, stackable to 64)
-- Null Pointer Exception Item: Right-click to shoot a projectile that crashes the client on impact
+description="""A Minecraft mod that adds the Java Item and Null Pointer Projectile.
+When you right-click on air with the Java Item, it generates a Null Pointer.
+When you right-click with the Null Pointer, it shoots a projectile that crashes the client when it hits something.
 """
 
 [[dependencies.nullpointermod]]
     modId="forge"
     mandatory=true
-    versionRange="[40,)"
+    versionRange="[43,)"
     ordering="NONE"
     side="BOTH"
 
 [[dependencies.nullpointermod]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.19,1.20)"
+    versionRange="[1.20.1,1.21)"
     ordering="NONE"
     side="BOTH"
