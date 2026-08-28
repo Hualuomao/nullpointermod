@@ -16,7 +16,7 @@ public class JavaItem extends Item {
     private static final int MAX_NULL_POINTERS = 64;
 
     public JavaItem() {
-        super(new Properties().stacksTo(1));
+        super(new Item.Properties().stacksTo(1)); // 明确使用 Item.Properties
     }
 
     @Override
@@ -51,7 +51,6 @@ public class JavaItem extends Item {
         return InteractionResultHolder.success(heldStack);
     }
 
-    // 统计合法位置：玩家背包、末影箱、掉落物
     private int countNullPointers(Level level) {
         int total = 0;
 
