@@ -1,108 +1,115 @@
-package com.example.nullpointermod;
+package com.example.nullpointermod.item;
 
-import com.example.nullpointermod.entity.NullPointerProjectile;
-import com.example.nullpointermod.item.JavaItem;
-import com.example.nullpointermod.item.NullPointerItem;
-import com.example.nullpointermod.network.ClientboundCrashPacket;
-import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.Container;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.MobCategory;
+import com.example.nullpointermod.NullPointerMod;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.EnderChestBlockEntity;
-import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.network.NetworkRegistry;
-import net.minecraftforge.network.simple.SimpleChannel;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
-import net.minecraftforge.server.ServerLifecycleHooks;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 
-@Mod(NullPointerMod.MOD_ID)
-public class NullPointerMod {
-    public static final String MOD_ID = "nullpointermod";
-    private static final String PROTOCOL_VERSION = "1.0";
-    public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
-            new ResourceLocation(MOD_ID, "main"),
-            () -> PROTOCOL_VERSION,
-            PROTOCOL_VERSION::equals,
-            PROTOCOL_VERSION::equals
-    );
+import java.util.List;
 
-    private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MOD_ID);
-    public static final RegistryObject<Item> NULL_POINTER_ITEM = ITEMS.register("java_null_pointer_exception", NullPointerItem::new);
-    public static final RegistryObject<Item> JAVA_ITEM = ITEMS.register("java_item", JavaItem::new);
+public class JavaItem extends Item {
+    private static final int COOLDOWN_TICKS = 100;          // 5 秒冷却
+    private static final int MAX_PLAYER_GENERATIONS = 16;   // 每玩家最多生成 16 个
+    private static final int MAX_GLOBAL_COUNT = 128;        // 全局最多 128 个（包含掉落物）
+    private static final int ITEM_LIFETIME_SECONDS = 30;    // 掉落物 30 秒后消失
 
-    private static final DeferredRegister<EntityType<?>> ENTITIES = DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, MOD_ID);
-    public static final RegistryObject<EntityType<NullPointerProjectile>> NULL_POINTER_PROJECTILE =
-            ENTITIES.register("null_pointer_projectile",
-                    () -> EntityType.Builder.<NullPointerProjectile>of(NullPointerProjectile::new, MobCategory.MISC)
-                            .sized(0.25F, 0.25F)
-                            .clientTrackingRange(4)
-                            .updateInterval(20)
-                            .build("null_pointer_projectile")
-            );
-
-    public NullPointerMod() {
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-        ITEMS.register(modEventBus);
-        ENTITIES.register(modEventBus);
-
-        CHANNEL.registerMessage(0, ClientboundCrashPacket.class,
-                ClientboundCrashPacket::encode,
-                ClientboundCrashPacket::decode,
-                ClientboundCrashPacket::handle
-        );
-
-        MinecraftForge.EVENT_BUS.register(this);
+    public JavaItem() {
+        super(new Item.Properties().stacksTo(1));
     }
 
-    private static int tickCounter = 0;
+    @Override
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack heldStack = player.getItemInHand(hand);
 
-    @SubscribeEvent
-    public void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase == TickEvent.Phase.END) {
-            tickCounter++;
-            if (tickCounter % 20 == 0) {
-                scanAndCleanContainers();
-            }
+        if (player.getCooldowns().isOnCooldown(this)) {
+            return InteractionResultHolder.fail(heldStack);
         }
+
+        if (!level.isClientSide()) {
+            // 1. 检查全局数量
+            int globalCount = countAllNullPointers(level);
+            if (globalCount >= MAX_GLOBAL_COUNT) {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                        "§c服务器空指针已达上限（" + MAX_GLOBAL_COUNT + " 个），无法生成！"
+                ));
+                player.getCooldowns().addCooldown(this, 20);
+                return InteractionResultHolder.fail(heldStack);
+            }
+
+            // 2. 检查玩家已生成次数
+            CompoundTag persistentData = player.getPersistentData();
+            int playerGenerated = persistentData.getInt("nullpointer_generated");
+            if (playerGenerated >= MAX_PLAYER_GENERATIONS) {
+                player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                        "§c你已达到个人生成上限（" + MAX_PLAYER_GENERATIONS + " 个）！"
+                ));
+                player.getCooldowns().addCooldown(this, 20);
+                return InteractionResultHolder.fail(heldStack);
+            }
+
+            // 3. 生成空指针物品
+            ItemStack nullPointerStack = new ItemStack(NullPointerMod.NULL_POINTER_ITEM.get());
+            if (!player.getInventory().add(nullPointerStack)) {
+                // 背包满则丢在地上，并加上消失倒计时
+                ItemEntity itemEntity = player.drop(nullPointerStack, false);
+                if (itemEntity != null) {
+                    // 设置 30 秒后自动消失（600 ticks）
+                    itemEntity.lifespan = ITEM_LIFETIME_SECONDS * 20; // 20 ticks = 1 秒
+                }
+            }
+
+            // 4. 更新玩家计数
+            persistentData.putInt("nullpointer_generated", playerGenerated + 1);
+
+            // 5. 冷却 + 提示
+            player.getCooldowns().addCooldown(this, COOLDOWN_TICKS);
+            player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
+                    "§a生成空指针！当前服务器总量：" + (globalCount + 1) + "/" + MAX_GLOBAL_COUNT
+            ));
+        }
+
+        return InteractionResultHolder.success(heldStack);
     }
 
-    private void scanAndCleanContainers() {
-        // 获取当前服务器实例（Forge 方式）
-        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
-        if (server == null) return;
+    // 统计服务器中所有空指针（背包 + 末影箱 + 掉落物）
+    private int countAllNullPointers(Level level) {
+        int total = 0;
 
-        for (ServerLevel level : server.getAllLevels()) {
-            // 遍历所有已加载的区块
-            for (LevelChunk chunk : level.getChunkSource().getLoadedChunks()) {
-                // 获取该区块中的所有方块实体（Map<BlockPos, BlockEntity>）
-                for (BlockEntity be : chunk.getBlockEntities().values()) {
-                    // 跳过末影箱（合法存储）
-                    if (be instanceof EnderChestBlockEntity) continue;
-
-                    if (be instanceof Container container) {
-                        for (int slot = 0; slot < container.getContainerSize(); slot++) {
-                            ItemStack stack = container.getItem(slot);
-                            if (!stack.isEmpty() && stack.getItem() == NULL_POINTER_ITEM.get()) {
-                                container.setItem(slot, ItemStack.EMPTY);
-                            }
-                        }
+        // 1. 遍历所有玩家
+        for (Player player : level.players()) {
+            // 背包
+            for (ItemStack stack : player.getInventory().items) {
+                if (stack.getItem() == NullPointerMod.NULL_POINTER_ITEM.get()) {
+                    total += stack.getCount();
+                }
+            }
+            // 末影箱（通过安全遍历）
+            if (player.getEnderChestInventory() != null) {
+                var enderChest = player.getEnderChestInventory();
+                for (int i = 0; i < enderChest.getContainerSize(); i++) {
+                    ItemStack stack = enderChest.getItem(i);
+                    if (stack.getItem() == NullPointerMod.NULL_POINTER_ITEM.get()) {
+                        total += stack.getCount();
                     }
                 }
             }
         }
+
+        // 2. 统计掉落物（全维度扫描，仅限已加载区块）
+        AABB worldAABB = new AABB(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY,
+                Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+        List<ItemEntity> items = level.getEntitiesOfClass(ItemEntity.class, worldAABB,
+                e -> e.getItem().getItem() == NullPointerMod.NULL_POINTER_ITEM.get());
+        for (ItemEntity itemEntity : items) {
+            total += itemEntity.getItem().getCount();
+        }
+
+        return total;
     }
 }
