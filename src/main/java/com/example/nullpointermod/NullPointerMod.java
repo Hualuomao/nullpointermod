@@ -21,6 +21,7 @@ import net.minecraftforge.registries.RegistryObject;
 @Mod(NullPointerMod.MOD_ID)
 public class NullPointerMod {
     public static final String MOD_ID = "nullpointermod";
+    public static final Logger LOGGER = LoggerFactory.getLogger(NullPointerMod.class);
     private static final String PROTOCOL_VERSION = "1.0";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(MOD_ID, "main"),
