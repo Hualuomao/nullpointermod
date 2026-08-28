@@ -79,7 +79,7 @@ public class NullPointerProjectile extends ThrowableProjectile {
 
     @Override
     protected void defineSynchedData() {
-        // 无数据需要同步
+        // 无数据同步
     }
 
     @Override
