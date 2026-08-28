@@ -53,32 +53,30 @@ public class JavaItem extends Item {
 
     // 统计合法位置：玩家背包、末影箱、掉落物
     private int countNullPointers(Level level) {
-        int total = 0;
+    int total = 0;
 
-        for (Player player : level.players()) {
-            for (ItemStack stack : player.getInventory().items) {
+    // 1. 统计所有玩家的背包 + 末影箱
+    for (Player player : level.players()) {
+        for (ItemStack stack : player.getInventory().items) {
+            if (stack.getItem() == NullPointerMod.NULL_POINTER_ITEM.get()) {
+                total += stack.getCount();
+            }
+        }
+        if (player.getEnderChestInventory() != null) {
+            for (ItemStack stack : player.getEnderChestInventory().items) {
                 if (stack.getItem() == NullPointerMod.NULL_POINTER_ITEM.get()) {
                     total += stack.getCount();
                 }
             }
-            // 使用正确的方式访问末影箱
-            if (player.getEnderChestInventory() != null) {
-                for (int i = 0; i < player.getEnderChestInventory().getContainerSize(); i++) {
-                    ItemStack stack = player.getEnderChestInventory().getItem(i);
-                    if (stack.getItem() == NullPointerMod.NULL_POINTER_ITEM.get()) {
-                        total += stack.getCount();
-                    }
-                }
-            }
         }
-
-        List<ItemEntity> items = level.getEntitiesOfClass(ItemEntity.class,
-                level.getWorldBorder().getBoundingBoxMargin(0),
-                e -> e.getItem().getItem() == NullPointerMod.NULL_POINTER_ITEM.get());
-        for (ItemEntity itemEntity : items) {
-            total += itemEntity.getItem().getCount();
-        }
-
-        return total;
     }
+
+    // 2. 统计所有掉落物实体（不依赖世界边界）
+    List<ItemEntity> items = level.getEntitiesOfClass(ItemEntity.class,
+            e -> e.getItem().getItem() == NullPointerMod.NULL_POINTER_ITEM.get());
+    for (ItemEntity itemEntity : items) {
+        total += itemEntity.getItem().getCount();
+    }
+
+    return total;
 }
