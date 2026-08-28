@@ -12,20 +12,12 @@ public class ClientboundCrashPacket {
         this.message = message;
     }
 
-    public ClientboundCrashPacket(FriendlyByteBuf buf) {
-        this(buf.readUtf(256));
-    }
-
-    public void toBytes(FriendlyByteBuf buf) {
+    public void encode(FriendlyByteBuf buf) {
         buf.writeUtf(message, 256);
     }
 
     public static ClientboundCrashPacket decode(FriendlyByteBuf buf) {
-        return new ClientboundCrashPacket(buf);
-    }
-
-    public static void encode(ClientboundCrashPacket packet, FriendlyByteBuf buf) {
-        packet.toBytes(buf);
+        return new ClientboundCrashPacket(buf.readUtf(256));
     }
 
     public static void handle(ClientboundCrashPacket packet, Supplier<NetworkEvent.Context> ctx) {
