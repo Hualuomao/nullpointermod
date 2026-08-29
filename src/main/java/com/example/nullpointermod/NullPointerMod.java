@@ -62,7 +62,7 @@ public class NullPointerMod {
                             .build("null_pointer_projectile")
             );
 
-    // ===== 注册创造模式标签页 =====
+    // ===== 注册创造模式标签页（只包含 Java 物品，NPE 不显示） =====
     private static final DeferredRegister<CreativeModeTab> CREATIVE_TABS =
             DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MOD_ID);
 
@@ -72,8 +72,9 @@ public class NullPointerMod {
                             .title(Component.translatable("itemGroup." + MOD_ID))
                             .icon(() -> new ItemStack(JAVA_ITEM.get()))
                             .displayItems((parameters, output) -> {
+                                // ✅ 只添加 Java 物品，空指针物品不出现在创造模式
                                 output.accept(JAVA_ITEM.get());
-                                output.accept(NULL_POINTER_ITEM.get());
+                                // output.accept(NULL_POINTER_ITEM.get()); // ❌ 故意注释掉
                             })
                             .build()
             );
@@ -81,19 +82,16 @@ public class NullPointerMod {
     public NullPointerMod() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
-        // 注册物品、实体、创造标签
         ITEMS.register(modEventBus);
         ENTITIES.register(modEventBus);
         CREATIVE_TABS.register(modEventBus);
 
-        // 注册网络包
         CHANNEL.registerMessage(0, ClientboundCrashPacket.class,
                 ClientboundCrashPacket::encode,
                 ClientboundCrashPacket::decode,
                 ClientboundCrashPacket::handle
         );
 
-        // 注册事件（包括指令）
         MinecraftForge.EVENT_BUS.register(this);
     }
 
