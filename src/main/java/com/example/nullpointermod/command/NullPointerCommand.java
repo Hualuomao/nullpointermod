@@ -11,7 +11,7 @@ import net.minecraft.network.chat.Component;
 public class NullPointerCommand {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("nullpointer")
-                .requires(source -> source.hasPermission(2)) // 需要 OP 权限
+                .requires(source -> source.hasPermission(2))
                 .then(Commands.literal("damage")
                         .then(Commands.argument("mode", StringArgumentType.word())
                                 .suggests((context, builder) -> {
@@ -32,8 +32,9 @@ public class NullPointerCommand {
         NullPointerMod.ENABLE_DAMAGE = enable;
         String status = enable ? "§a开启" : "§c关闭";
 
+        // ✅ 修复：用 lambda 包装 Component
         context.getSource().sendSuccess(
-                Component.literal("§6[NullPointerMod] §r实体伤害已" + status),
+                () -> Component.literal("§6[NullPointerMod] §r实体伤害已" + status),
                 true
         );
         NullPointerMod.LOGGER.info("实体伤害已{}（由 {} 执行）",
