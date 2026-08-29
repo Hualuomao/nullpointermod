@@ -1,15 +1,22 @@
 package com.example.nullpointermod;
 
+import com.example.nullpointermod.command.NullPointerCommand;
 import com.example.nullpointermod.entity.NullPointerProjectile;
 import com.example.nullpointermod.item.JavaItem;
 import com.example.nullpointermod.item.NullPointerItem;
 import com.example.nullpointermod.network.ClientboundCrashPacket;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.network.NetworkRegistry;
@@ -25,6 +32,10 @@ public class NullPointerMod {
     public static final String MOD_ID = "nullpointermod";
     public static final Logger LOGGER = LoggerFactory.getLogger(NullPointerMod.class);
 
+    // ===== 实体伤害开关（默认关闭） =====
+    public static boolean ENABLE_DAMAGE = false;
+
+    // ===== 网络通道 =====
     private static final String PROTOCOL_VERSION = "1.0";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(MOD_ID, "main"),
@@ -33,10 +44,14 @@ public class NullPointerMod {
             PROTOCOL_VERSION::equals
     );
 
+    // ===== 注册物品 =====
     private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MOD_ID);
-    public static final RegistryObject<Item> NULL_POINTER_ITEM = ITEMS.register("java_null_pointer_exception", NullPointerItem::new);
-    public static final RegistryObject<Item> JAVA_ITEM = ITEMS.register("java_item", JavaItem::new);
+    public static final RegistryObject<Item> NULL_POINTER_ITEM = ITEMS.register("java_null_pointer_exception",
+            NullPointerItem::new);
+    public static final RegistryObject<Item> JAVA_ITEM = ITEMS.register("java_item",
+            JavaItem::new);
 
+    // ===== 注册实体 =====
     private static final DeferredRegister<EntityType<?>> ENTITIES = DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, MOD_ID);
     public static final RegistryObject<EntityType<NullPointerProjectile>> NULL_POINTER_PROJECTILE =
             ENTITIES.register("null_pointer_projectile",
@@ -47,17 +62,45 @@ public class NullPointerMod {
                             .build("null_pointer_projectile")
             );
 
+    // ===== 注册创造模式标签页 =====
+    private static final DeferredRegister<CreativeModeTab> CREATIVE_TABS =
+            DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MOD_ID);
+
+    public static final RegistryObject<CreativeModeTab> NULL_POINTER_TAB =
+            CREATIVE_TABS.register("nullpointer_tab",
+                    () -> CreativeModeTab.builder()
+                            .title(Component.translatable("itemGroup." + MOD_ID))
+                            .icon(() -> new ItemStack(JAVA_ITEM.get()))
+                            .displayItems((parameters, output) -> {
+                                output.accept(JAVA_ITEM.get());
+                                output.accept(NULL_POINTER_ITEM.get());
+                            })
+                            .build()
+            );
+
     public NullPointerMod() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+
+        // 注册物品、实体、创造标签
         ITEMS.register(modEventBus);
         ENTITIES.register(modEventBus);
+        CREATIVE_TABS.register(modEventBus);
 
+        // 注册网络包
         CHANNEL.registerMessage(0, ClientboundCrashPacket.class,
                 ClientboundCrashPacket::encode,
                 ClientboundCrashPacket::decode,
                 ClientboundCrashPacket::handle
         );
 
+        // 注册事件（包括指令）
         MinecraftForge.EVENT_BUS.register(this);
+    }
+
+    // ===== 注册指令 =====
+    @SubscribeEvent
+    public void onRegisterCommands(RegisterCommandsEvent event) {
+        NullPointerCommand.register(event.getDispatcher());
+        LOGGER.info("已注册 /nullpointer 指令");
     }
 }
